@@ -11,7 +11,6 @@
 #include "client_app_other.h"
 #include "client_app_renderer.h"
 #include "client_switches.h"
-#include "simple_app.h"
 
 // When generating projects with CMake the CEF_USE_SANDBOX value will be defined
 // automatically if using the required compiler version. Pass -DUSE_SANDBOX=OFF

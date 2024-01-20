@@ -17,25 +17,15 @@ set(CEFSIMPLE_SRCS
   client_app_renderer.cc
   client_app_renderer.h
   client_switches.cc
-  client_switches.h
-  simple_app.cc
-  simple_app.h
-  simple_handler.cc
-  simple_handler.h)
+  client_switches.h)
 set(CEFSIMPLE_SRCS_LINUX
-  cefsimple_linux.cc
-  simple_handler_linux.cc
-  )
+  cefsimple_linux.cc)
 set(CEFSIMPLE_SRCS_MAC
-  cefsimple_mac.mm
-  simple_handler_mac.mm
-  )
+  cefsimple_mac.mm)
 set(CEFSIMPLE_SRCS_WINDOWS
   cefsimple.rc
   cefsimple_win.cc
-  resource.h
-  simple_handler_win.cc
-  )
+  resource.h)
 APPEND_PLATFORM_SOURCES(CEFSIMPLE_SRCS)
 source_group(cefsimple FILES ${CEFSIMPLE_SRCS})
 
