@@ -10,18 +10,25 @@
 set(CEFSIMPLE_SRCS
   client_app.cc
   client_app.h
+  client_app_browser.cc
+  client_app_browser.h
   client_app_delegates_common.cc
   client_app_delegates_renderer.cc
   client_app_other.cc
   client_app_other.h
   client_app_renderer.cc
   client_app_renderer.h
+  client_browser.cc
+  client_browser.h
   client_switches.cc
-  client_switches.h)
-set(CEFSIMPLE_SRCS_LINUX
-  cefsimple_linux.cc)
-set(CEFSIMPLE_SRCS_MAC
-  cefsimple_mac.mm)
+  client_switches.h
+  default_client_handler.cc
+  default_client_handler.h
+  main_context.cc
+  main_context.h
+  osr_renderer_settings.h
+  root_window_manager.cc
+  root_window_manager.h)
 set(CEFSIMPLE_SRCS_WINDOWS
   cefsimple.rc
   cefsimple_win.cc
