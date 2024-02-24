@@ -37,29 +37,8 @@ cd /path/to/cef-project
 mkdir build
 cd build
 
-# To perform a Linux build using a CEF binary distribution matching the host
-# architecture (x64, ARM or ARM64):
-cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ..
-make -j4
-
-# To perform a MacOS build using a 64-bit CEF binary distribution:
-cmake -G "Xcode" -DPROJECT_ARCH="x86_64" ..
-# Then, open build\cef.xcodeproj in Xcode and select Product > Build.
-
-# To perform a MacOS build using an ARM64 CEF binary distribution:
-cmake -G "Xcode" -DPROJECT_ARCH="arm64" ..
-# Then, open build\cef.xcodeproj in Xcode and select Product > Build.
-
 # To perform a Windows build using a 32-bit CEF binary distribution:
 cmake -G "Visual Studio 17" -A Win32 ..
-# Then, open build\cef.sln in Visual Studio 2022 and select Build > Build Solution.
-
-# To perform a Windows build using a 64-bit CEF binary distribution:
-cmake -G "Visual Studio 17" -A x64 ..
-# Then, open build\cef.sln in Visual Studio 2022 and select Build > Build Solution.
-
-# To perform a Windows build using an ARM64 CEF binary distribution:
-cmake -G "Visual Studio 17" -A arm64 ..
 # Then, open build\cef.sln in Visual Studio 2022 and select Build > Build Solution.
 ```
 
