@@ -9,6 +9,7 @@
 // Must match the value in client_handler.cc.
 const char kOnFocusMessage[] = "ClientRenderer.OnFocus";
 const char kOnMouseOverMessage[] = "ClientRenderer.OnMouseOver";
+const char kOnNavigateMessage[] = "ClientRenderer.OnNavigate";
 
 ClientAppRenderer::ClientAppRenderer() {
   CreateDelegates(delegates_);
@@ -47,9 +48,9 @@ CefRefPtr<CefLoadHandler> ClientAppRenderer::GetLoadHandler() {
   return load_handler;
 }
 
-class MyV8Handler : public CefV8Handler {
+class MouseOverHandler : public CefV8Handler {
  public:
-  MyV8Handler() {}
+  MouseOverHandler() {}
 
   virtual bool Execute(const CefString& name,
                        CefRefPtr<CefV8Value> object,
@@ -107,19 +108,86 @@ class MyV8Handler : public CefV8Handler {
   }
 
   // Provide the reference counting implementation for this class.
-  IMPLEMENT_REFCOUNTING(MyV8Handler);
+  IMPLEMENT_REFCOUNTING(MouseOverHandler);
+};
+
+class NavigateHandler : public CefV8Handler {
+ public:
+  NavigateHandler() {}
+
+  virtual bool Execute(const CefString& name,
+                       CefRefPtr<CefV8Value> object,
+                       const CefV8ValueList& arguments,
+                       CefRefPtr<CefV8Value>& retval,
+                       CefString& exception) override {
+    CefRefPtr<CefV8Context> context = CefV8Context::GetCurrentContext();
+    CefRefPtr<CefFrame> frame = context->GetFrame();
+    CefRefPtr<CefV8Value> event = arguments.front();
+    
+    // Initialize process message
+    CefRefPtr<CefProcessMessage> message = CefProcessMessage::Create(kOnNavigateMessage);
+    CefRefPtr<CefDictionaryValue> messageArguments = CefDictionaryValue::Create();
+
+    // Extract navigation information
+    CefRefPtr<CefV8Value> destination = event->GetValue("destination");
+    CefRefPtr<CefDictionaryValue> destinationFields =
+        CefDictionaryValue::Create();
+    destinationFields->SetString("id", destination->GetValue("id")->GetStringValue());
+    destinationFields->SetInt("index",
+                                 destination->GetValue("index")->GetIntValue());
+    destinationFields->SetString("key",
+                                 destination->GetValue("key")->GetStringValue());
+    destinationFields->SetBool(
+        "sameDocument", destination->GetValue("sameDocument")->GetBoolValue());
+    destinationFields->SetString(
+        "url", destination->GetValue("url")->GetStringValue());
+    messageArguments->SetDictionary("destination", destinationFields);
+
+    CefRefPtr<CefV8Value> formData = event->GetValue("formData");
+    if (!formData->IsNull()) {
+      // TODO: Populate dictionary with form fields
+      CefRefPtr<CefDictionaryValue> formFields =
+          CefDictionaryValue::Create();
+      messageArguments->SetDictionary("formData", formFields);
+    }
+
+    bool hashChange = event->GetValue("hashChange")->GetBoolValue();
+    messageArguments->SetBool("hashChange", hashChange);
+    
+    CefString navigationType = event->GetValue("navigationType")->GetStringValue();
+    messageArguments->SetString("navigationType", navigationType);
+    
+    bool userInitiated = event->GetValue("userInitiated")->GetBoolValue();
+    messageArguments->SetBool("userInitiated", userInitiated);
+
+    // Send to browser process
+    message->GetArgumentList()->SetDictionary(0, messageArguments);
+    frame->SendProcessMessage(PID_BROWSER, message);
+    
+    return true;
+  }
+
+  // Provide the reference counting implementation for this class.
+  IMPLEMENT_REFCOUNTING(NavigateHandler);
 };
 
 void ClientAppRenderer::OnContextCreated(CefRefPtr<CefBrowser> browser,
                                          CefRefPtr<CefFrame> frame,
                                          CefRefPtr<CefV8Context> context) {
   CefRefPtr<CefV8Value> window = context->GetGlobal();
-  CefRefPtr<CefV8Handler> handler = new MyV8Handler();
-  CefV8ValueList arguments;
-  arguments.push_back(CefV8Value::CreateString("mouseover"));
-  arguments.push_back(CefV8Value::CreateFunction("onMouseOver", handler));
-  CefRefPtr<CefV8Value> result =
-      window->GetValue("addEventListener")->ExecuteFunction(window, arguments);
+  CefRefPtr<CefV8Handler> mouseOverHandler = new MouseOverHandler();
+  CefV8ValueList mouseOverArguments;
+  mouseOverArguments.push_back(CefV8Value::CreateString("mouseover"));
+  mouseOverArguments.push_back(CefV8Value::CreateFunction("onMouseOver", mouseOverHandler));
+  window->GetValue("addEventListener")->ExecuteFunction(window, mouseOverArguments);
+
+  CefRefPtr<CefV8Value> navigation = window->GetValue("navigation");
+  CefRefPtr<CefV8Handler> navigateHandler = new NavigateHandler();
+  CefV8ValueList navigateArguments;
+  navigateArguments.push_back(CefV8Value::CreateString("navigate"));
+  navigateArguments.push_back(
+      CefV8Value::CreateFunction("onNavigate", navigateHandler));
+  navigation->GetValue("addEventListener")->ExecuteFunction(navigation, navigateArguments);
 }
 
 void ClientAppRenderer::OnContextReleased(CefRefPtr<CefBrowser> browser,
