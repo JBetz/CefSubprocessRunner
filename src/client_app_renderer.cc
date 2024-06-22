@@ -8,6 +8,7 @@
 
 // Must match the value in client_handler.cc.
 const char kOnFocusMessage[] = "ClientRenderer.OnFocus";
+const char kOnFocusOutMessage[] = "ClientRenderer.OnFocusOut";
 const char kOnMouseOverMessage[] = "ClientRenderer.OnMouseOver";
 const char kOnNavigateMessage[] = "ClientRenderer.OnNavigate";
 
@@ -171,6 +172,42 @@ class NavigateHandler : public CefV8Handler {
   IMPLEMENT_REFCOUNTING(NavigateHandler);
 };
 
+class FocusOutHandler : public CefV8Handler {
+ public:
+  FocusOutHandler() {}
+
+  virtual bool Execute(const CefString& name,
+                       CefRefPtr<CefV8Value> object,
+                       const CefV8ValueList& arguments,
+                       CefRefPtr<CefV8Value>& retval,
+                       CefString& exception) override {
+    CefRefPtr<CefV8Context> context = CefV8Context::GetCurrentContext();
+    CefRefPtr<CefFrame> frame = context->GetFrame();
+    CefRefPtr<CefV8Value> event = arguments.front();
+    CefRefPtr<CefV8Value> relatedTarget = event->GetValue("relatedTarget");
+    CefRefPtr<CefProcessMessage> message =
+        CefProcessMessage::Create(kOnFocusOutMessage);
+    CefRefPtr<CefDictionaryValue> messageArguments =
+        CefDictionaryValue::Create();
+
+    if (!relatedTarget->IsNull()) {
+      messageArguments->SetString(
+          "tagName", relatedTarget->GetValue("tagName")->GetStringValue());
+      CefRefPtr<CefV8Value> attributes = relatedTarget->GetValue("attributes");
+      messageArguments->SetString(
+          "type", attributes->GetValue("type")->GetStringValue());
+      messageArguments->SetBool(
+          "isEditable", attributes->GetValue("isEditable")->GetBoolValue());
+    }
+    message->GetArgumentList()->SetDictionary(0, messageArguments);
+    frame->SendProcessMessage(PID_BROWSER, message);
+    return true;
+  }
+
+  // Provide the reference counting implementation for this class.
+  IMPLEMENT_REFCOUNTING(FocusOutHandler);
+};
+
 void ClientAppRenderer::OnContextCreated(CefRefPtr<CefBrowser> browser,
                                          CefRefPtr<CefFrame> frame,
                                          CefRefPtr<CefV8Context> context) {
@@ -188,6 +225,15 @@ void ClientAppRenderer::OnContextCreated(CefRefPtr<CefBrowser> browser,
   navigateArguments.push_back(
       CefV8Value::CreateFunction("onNavigate", navigateHandler));
   navigation->GetValue("addEventListener")->ExecuteFunction(navigation, navigateArguments);
+
+  CefRefPtr<CefV8Value> document = window->GetValue("document");
+  CefRefPtr<CefV8Handler> focusOutHandler = new FocusOutHandler();
+  CefV8ValueList focusOutArguments;
+  focusOutArguments.push_back(CefV8Value::CreateString("focusout"));
+  focusOutArguments.push_back(
+      CefV8Value::CreateFunction("onFocusOut", focusOutHandler));
+  document->GetValue("addEventListener")
+      ->ExecuteFunction(document, focusOutArguments);
 }
 
 void ClientAppRenderer::OnContextReleased(CefRefPtr<CefBrowser> browser,
