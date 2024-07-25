@@ -11,6 +11,7 @@ const char kOnFocusMessage[] = "ClientRenderer.OnFocus";
 const char kOnFocusOutMessage[] = "ClientRenderer.OnFocusOut";
 const char kOnMouseOverMessage[] = "ClientRenderer.OnMouseOver";
 const char kOnNavigateMessage[] = "ClientRenderer.OnNavigate";
+const char kOnEvalMessage[] = "ClientRenderer.OnEval";
 
 ClientAppRenderer::ClientAppRenderer() {
   CreateDelegates(delegates_);
@@ -281,7 +282,56 @@ bool ClientAppRenderer::OnProcessMessageReceived(
     CefRefPtr<CefProcessMessage> message) {
   DCHECK_EQ(source_process, PID_BROWSER);
 
+  CefRefPtr<CefV8Context> context = frame->GetV8Context();
+  context->Enter();
+  const CefString& name = message->GetName();
   bool handled = false;
+  if (name == "Eval") {
+    CefRefPtr<CefListValue> argumentList = message->GetArgumentList();
+    CefRefPtr<CefDictionaryValue> arguments = argumentList->GetDictionary(0);
+    const CefString& id = arguments->GetString("id");
+    const CefString& code = arguments->GetString("code");
+    const CefString& script_url = arguments->GetString("scriptUrl");
+    int start_line = arguments->GetInt("startLine");
+    CefRefPtr<CefV8Value> retval;
+    CefRefPtr<CefV8Exception> exception;
+    bool success = context->Eval(code, script_url, start_line, retval, exception);
+
+    CefRefPtr<CefProcessMessage> responseMessage =
+        CefProcessMessage::Create(kOnEvalMessage);
+    CefRefPtr<CefDictionaryValue> messageArguments =
+        CefDictionaryValue::Create();
+    messageArguments->SetString("id", id);
+      
+    if (success) {
+      CefRefPtr<CefV8Value> window = context->GetGlobal();  
+      CefRefPtr<CefV8Value> json = window->GetValue("JSON");     
+      CefRefPtr<CefV8Value> stringifyFunction = json->GetValue("stringify");
+      CefV8ValueList stringifyArguments;
+      stringifyArguments.push_back(retval);
+      const CefString& result =
+          stringifyFunction->ExecuteFunction(json, stringifyArguments)
+              ->GetStringValue();
+      messageArguments->SetString("success", result);
+    } else {
+      CefRefPtr<CefDictionaryValue> errorData=
+          CefDictionaryValue::Create();
+      errorData->SetInt("endColumn", exception->GetEndColumn());
+      errorData->SetInt("endPosition", exception->GetEndPosition());
+      errorData->SetInt("lineNumber", exception->GetLineNumber());
+      errorData->SetString("message", exception->GetMessage());
+      errorData->SetString("endColumn", exception->GetScriptResourceName());
+      errorData->SetString("sourceLine", exception->GetSourceLine());
+      errorData->SetInt("startColumn", exception->GetStartColumn());
+      errorData->SetInt("startPosition", exception->GetStartPosition());
+      messageArguments->SetDictionary(
+          "error", errorData);
+    }
+    responseMessage->GetArgumentList()->SetDictionary(0, messageArguments);
+    frame->SendProcessMessage(source_process, responseMessage);
+    handled = true;
+  }
+  context->Exit();
 
   DelegateSet::iterator it = delegates_.begin();
   for (; it != delegates_.end() && !handled; ++it) {
