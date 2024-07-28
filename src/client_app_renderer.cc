@@ -11,6 +11,7 @@ const char kOnFocusMessage[] = "ClientRenderer.OnFocus";
 const char kOnFocusOutMessage[] = "ClientRenderer.OnFocusOut";
 const char kOnMouseOverMessage[] = "ClientRenderer.OnMouseOver";
 const char kOnNavigateMessage[] = "ClientRenderer.OnNavigate";
+const char kOnMessageMessage[] = "ClientRenderer.OnMessage";
 const char kOnEvalMessage[] = "ClientRenderer.OnEval";
 
 ClientAppRenderer::ClientAppRenderer() {
@@ -113,6 +114,46 @@ class MouseOverHandler : public CefV8Handler {
   IMPLEMENT_REFCOUNTING(MouseOverHandler);
 };
 
+class MessageHandler : public CefV8Handler {
+ public:
+  MessageHandler() {}
+
+  virtual bool Execute(const CefString& name,
+                       CefRefPtr<CefV8Value> object,
+                       const CefV8ValueList& arguments,
+                       CefRefPtr<CefV8Value>& retval,
+                       CefString& exception) override {
+    CefRefPtr<CefV8Context> context = CefV8Context::GetCurrentContext();
+    CefRefPtr<CefV8Value> window = context->GetGlobal();
+    CefRefPtr<CefFrame> frame = context->GetFrame();
+    CefRefPtr<CefV8Value> event = arguments.front();
+    
+    CefRefPtr<CefProcessMessage> message =
+        CefProcessMessage::Create(kOnMessageMessage);
+
+    CefRefPtr<CefDictionaryValue> messageArguments =
+        CefDictionaryValue::Create();
+    CefString source = event->GetValue("source")->GetStringValue();
+    messageArguments->SetString("source", source);
+    CefRefPtr<CefV8Value> data = event->GetValue("data");
+
+    CefRefPtr<CefV8Value> json = window->GetValue("JSON");
+    CefRefPtr<CefV8Value> stringifyFunction = json->GetValue("stringify");
+    CefV8ValueList stringifyArguments;
+    stringifyArguments.push_back(data);
+    const CefString& stringifiedData =
+        stringifyFunction->ExecuteFunction(json, stringifyArguments)
+            ->GetStringValue();
+    messageArguments->SetString("data", stringifiedData);
+    message->GetArgumentList()->SetDictionary(0, messageArguments);
+    frame->SendProcessMessage(PID_BROWSER, message);
+    return true;
+  }
+
+  // Provide the reference counting implementation for this class.
+  IMPLEMENT_REFCOUNTING(MessageHandler);
+};
+
 class NavigateHandler : public CefV8Handler {
  public:
   NavigateHandler() {}
@@ -213,12 +254,15 @@ void ClientAppRenderer::OnContextCreated(CefRefPtr<CefBrowser> browser,
                                          CefRefPtr<CefFrame> frame,
                                          CefRefPtr<CefV8Context> context) {
   CefRefPtr<CefV8Value> window = context->GetGlobal();
+  
+  // mouse over
   CefRefPtr<CefV8Handler> mouseOverHandler = new MouseOverHandler();
   CefV8ValueList mouseOverArguments;
   mouseOverArguments.push_back(CefV8Value::CreateString("mouseover"));
   mouseOverArguments.push_back(CefV8Value::CreateFunction("onMouseOver", mouseOverHandler));
   window->GetValue("addEventListener")->ExecuteFunction(window, mouseOverArguments);
 
+  // navigation
   CefRefPtr<CefV8Value> navigation = window->GetValue("navigation");
   CefRefPtr<CefV8Handler> navigateHandler = new NavigateHandler();
   CefV8ValueList navigateArguments;
@@ -227,6 +271,7 @@ void ClientAppRenderer::OnContextCreated(CefRefPtr<CefBrowser> browser,
       CefV8Value::CreateFunction("onNavigate", navigateHandler));
   navigation->GetValue("addEventListener")->ExecuteFunction(navigation, navigateArguments);
 
+  // focus out
   CefRefPtr<CefV8Value> document = window->GetValue("document");
   CefRefPtr<CefV8Handler> focusOutHandler = new FocusOutHandler();
   CefV8ValueList focusOutArguments;
@@ -235,6 +280,15 @@ void ClientAppRenderer::OnContextCreated(CefRefPtr<CefBrowser> browser,
       CefV8Value::CreateFunction("onFocusOut", focusOutHandler));
   document->GetValue("addEventListener")
       ->ExecuteFunction(document, focusOutArguments);
+
+  // message
+  CefRefPtr<CefV8Handler> messageHandler = new MessageHandler();
+  CefV8ValueList messageArguments;
+  messageArguments.push_back(CefV8Value::CreateString("message"));
+  messageArguments.push_back(
+      CefV8Value::CreateFunction("onMessage", messageHandler));
+  window->GetValue("addEventListener")
+      ->ExecuteFunction(window, messageArguments);
 }
 
 void ClientAppRenderer::OnContextReleased(CefRefPtr<CefBrowser> browser,
