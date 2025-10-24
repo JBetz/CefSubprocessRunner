@@ -329,6 +329,48 @@ void ClientAppRenderer::OnFocusedNodeChanged(CefRefPtr<CefBrowser> browser,
   }
 }
 
+// Custom handler for our promise "then" callback
+class PromiseThenHandler : public CefV8Handler {
+ public:
+  explicit PromiseThenHandler(CefRefPtr<CefFrame> frame, CefProcessId sourceProcessId, const CefString messageId)
+      : frame(frame), sourceProcessId(sourceProcessId), messageId(messageId) {}
+
+  bool Execute(const CefString& name,
+               CefRefPtr<CefV8Value> object,
+               const CefV8ValueList& arguments,
+               CefRefPtr<CefV8Value>& retval,
+               CefString& exception) override {
+    if (name != "onPromiseResolved" || arguments.size() == 0) {
+      return false;
+    }
+    CefRefPtr<CefV8Context> context = frame->GetV8Context();
+    CefRefPtr<CefV8Value> window = context->GetGlobal();
+    CefRefPtr<CefV8Value> json = window->GetValue("JSON");
+    CefRefPtr<CefV8Value> stringifyFunction = json->GetValue("stringify");
+    CefV8ValueList stringifyArguments;
+    stringifyArguments.push_back(arguments[0]);
+    const CefString& result =
+        stringifyFunction->ExecuteFunction(json, stringifyArguments)
+            ->GetStringValue();
+    CefRefPtr<CefProcessMessage> responseMessage =
+        CefProcessMessage::Create(kOnEvalMessage);
+    CefRefPtr<CefDictionaryValue> messageArguments =
+        CefDictionaryValue::Create();
+    messageArguments->SetString("id", messageId);
+    messageArguments->SetString("success", result);
+    responseMessage->GetArgumentList()->SetDictionary(0, messageArguments);
+    frame->SendProcessMessage(sourceProcessId, responseMessage);
+    retval = arguments[0];
+    return true;
+  }
+
+ private:
+  CefRefPtr<CefFrame> frame;
+  CefProcessId sourceProcessId;
+  const CefString messageId;
+  IMPLEMENT_REFCOUNTING(PromiseThenHandler);
+};
+
 bool ClientAppRenderer::OnProcessMessageReceived(
     CefRefPtr<CefBrowser> browser,
     CefRefPtr<CefFrame> frame,
@@ -349,42 +391,49 @@ bool ClientAppRenderer::OnProcessMessageReceived(
     int start_line = arguments->GetInt("startLine");
     CefRefPtr<CefV8Value> retval;
     CefRefPtr<CefV8Exception> exception;
-    bool success = context->Eval(code, script_url, start_line, retval, exception);
-
-    CefRefPtr<CefProcessMessage> responseMessage =
-        CefProcessMessage::Create(kOnEvalMessage);
-    CefRefPtr<CefDictionaryValue> messageArguments =
-        CefDictionaryValue::Create();
-    messageArguments->SetString("id", id);
-      
-    if (success) {
-      CefRefPtr<CefV8Value> window = context->GetGlobal();  
-      CefRefPtr<CefV8Value> json = window->GetValue("JSON");     
-      CefRefPtr<CefV8Value> stringifyFunction = json->GetValue("stringify");
-      CefV8ValueList stringifyArguments;
-      stringifyArguments.push_back(retval);
-      const CefString& result =
-          stringifyFunction->ExecuteFunction(json, stringifyArguments)
-              ->GetStringValue();
-      messageArguments->SetString("success", result);
-    } else {
-      CefRefPtr<CefDictionaryValue> errorData=
+    bool success =
+        context->Eval(code, script_url, start_line, retval, exception);
+    if (success && retval->IsPromise()) {
+      CefRefPtr<CefV8Value> thenFunction = retval->GetValue("then");
+      CefRefPtr<PromiseThenHandler> handler =
+          new PromiseThenHandler(frame, source_process, id);
+      CefRefPtr<CefV8Value> onResolvedFunc =
+          CefV8Value::CreateFunction("onPromiseResolved", handler);
+      thenFunction->ExecuteFunction(retval, {onResolvedFunc});
+     } else {
+      CefRefPtr<CefProcessMessage> responseMessage =
+          CefProcessMessage::Create(kOnEvalMessage);
+      CefRefPtr<CefDictionaryValue> messageArguments =
           CefDictionaryValue::Create();
-      errorData->SetInt("endColumn", exception->GetEndColumn());
-      errorData->SetInt("endPosition", exception->GetEndPosition());
-      errorData->SetInt("lineNumber", exception->GetLineNumber());
-      errorData->SetString("message", exception->GetMessage());
-      errorData->SetString("endColumn", exception->GetScriptResourceName());
-      errorData->SetString("sourceLine", exception->GetSourceLine());
-      errorData->SetInt("startColumn", exception->GetStartColumn());
-      errorData->SetInt("startPosition", exception->GetStartPosition());
-      messageArguments->SetDictionary(
-          "error", errorData);
+      messageArguments->SetString("id", id);
+
+      if (success) {
+        CefRefPtr<CefV8Value> window = context->GetGlobal();
+        CefRefPtr<CefV8Value> json = window->GetValue("JSON");
+        CefRefPtr<CefV8Value> stringifyFunction = json->GetValue("stringify");
+        CefV8ValueList stringifyArguments;
+        stringifyArguments.push_back(retval);
+        const CefString& result =
+            stringifyFunction->ExecuteFunction(json, stringifyArguments)
+                ->GetStringValue();
+        messageArguments->SetString("success", result);
+      } else {
+        CefRefPtr<CefDictionaryValue> errorData = CefDictionaryValue::Create();
+        errorData->SetInt("endColumn", exception->GetEndColumn());
+        errorData->SetInt("endPosition", exception->GetEndPosition());
+        errorData->SetInt("lineNumber", exception->GetLineNumber());
+        errorData->SetString("message", exception->GetMessage());
+        errorData->SetString("endColumn", exception->GetScriptResourceName());
+        errorData->SetString("sourceLine", exception->GetSourceLine());
+        errorData->SetInt("startColumn", exception->GetStartColumn());
+        errorData->SetInt("startPosition", exception->GetStartPosition());
+        messageArguments->SetDictionary("error", errorData);
+      }
+      responseMessage->GetArgumentList()->SetDictionary(0, messageArguments);
+      frame->SendProcessMessage(source_process, responseMessage);
     }
-    responseMessage->GetArgumentList()->SetDictionary(0, messageArguments);
-    frame->SendProcessMessage(source_process, responseMessage);
-    handled = true;
   }
+  handled = true;
   context->Exit();
 
   DelegateSet::iterator it = delegates_.begin();
