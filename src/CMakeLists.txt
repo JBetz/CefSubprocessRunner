@@ -10,6 +10,8 @@
 set(CEFSIMPLE_SRCS
   client_app.cc
   client_app.h
+  client_app_browser.cc
+  client_app_browser.h
   client_app_delegates_common.cc
   client_app_delegates_renderer.cc
   client_app_other.cc
@@ -66,10 +68,10 @@ set(CEFSIMPLE_RESOURCES_SRCS
 #
 
 # Target executable names.
-set(CEF_TARGET "CefSubprocessRunner")
+set(CEF_TARGET "CefProcessRunner")
 if(OS_MAC)
-  set(CEF_HELPER_TARGET "CefSubprocessRunner_Helper")
-  set(CEF_HELPER_OUTPUT_NAME "CefSubprocessRunner Helper")
+  set(CEF_HELPER_TARGET "CefProcessRunner_Helper")
+  set(CEF_HELPER_OUTPUT_NAME "CefProcessRunner Helper")
 else()
   # Logical target used to link the libcef library.
   ADD_LOGICAL_TARGET("libcef_lib" "${CEF_LIB_DEBUG}" "${CEF_LIB_RELEASE}")

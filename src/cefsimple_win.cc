@@ -8,6 +8,7 @@
 #include "include/cef_sandbox_win.h"
 
 #include "client_app.h"
+#include "client_app_browser.h"
 #include "client_app_other.h"
 #include "client_app_renderer.h"
 #include "client_switches.h"
@@ -70,7 +71,9 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
   // Create a ClientApp of the correct type.
   CefRefPtr<CefApp> app;
   ClientApp::ProcessType process_type = ClientApp::GetProcessType(command_line);
-  if (process_type == ClientApp::RendererProcess) {
+  if (process_type == ClientApp::BrowserProcess) {
+    app = new ClientAppBrowser();
+  } else if (process_type == ClientApp::RendererProcess) {
     app = new ClientAppRenderer();
   } else if (process_type == ClientApp::OtherProcess) {
     app = new ClientAppOther();
@@ -80,5 +83,30 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
   // the same executable. This function checks the command-line and, if this is
   // a sub-process, executes the appropriate logic.
   exit_code = CefExecuteProcess(main_args, app, sandbox_info);
-  return exit_code;
+  if (exit_code >= 0) {
+    return exit_code;
+  }
+
+  // Specify CEF global settings here.
+  CefSettings settings;
+  settings.no_sandbox = true;
+  settings.log_severity = LOGSEVERITY_DEFAULT;
+  settings.windowless_rendering_enabled = true;
+
+  // Initialize the CEF browser process. The first browser instance will be
+  // created in CefBrowserProcessHandler::OnContextInitialized() after CEF has
+  // been initialized. May return false if initialization fails or if early exit
+  // is desired (for example, due to process singleton relaunch behavior).
+  if (!CefInitialize(main_args, settings, app, sandbox_info)) {
+    return 1;
+  }
+
+  // Run the CEF message loop. This will block until CefQuitMessageLoop() is
+  // called.
+  CefRunMessageLoop();
+
+  // Shut down CEF.
+  CefShutdown();
+
+  return 0;
 }
