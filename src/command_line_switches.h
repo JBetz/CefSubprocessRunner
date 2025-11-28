@@ -4,8 +4,6 @@
 
 // Defines all of the command line switches used by cefclient.
 
-#ifndef CEF_TESTS_SHARED_SHARED_COMMON_SWITCHES_H_
-#define CEF_TESTS_SHARED_SHARED_COMMON_SWITCHES_H_
 #pragma once
 
 namespace switches {
@@ -50,7 +48,6 @@ extern const char kUseWindowModalDialog[];
 extern const char kUseBottomControls[];
 extern const char kHidePipFrame[];
 extern const char kHideChromeBubbles[];
+extern const char kApplicationProcessId[];
 
 }  // namespace switches
-
-#endif  // CEF_TESTS_SHARED_SHARED_COMMON_SWITCHES_H_

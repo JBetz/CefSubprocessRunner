@@ -2,8 +2,6 @@
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 
-#ifndef CEF_TESTS_SHARED_COMMON_CLIENT_APP_H_
-#define CEF_TESTS_SHARED_COMMON_CLIENT_APP_H_
 #pragma once
 
 #include <vector>
@@ -11,9 +9,9 @@
 #include "include/cef_app.h"
 
 // Base class for customizing process-type-based behavior.
-class ClientApp : public CefApp {
+class ProcessHandler : public CefApp, CefClient {
  public:
-  ClientApp();
+  ProcessHandler();
 
   enum ProcessType {
     BrowserProcess,
@@ -22,19 +20,23 @@ class ClientApp : public CefApp {
     OtherProcess,
   };
 
+  bool OnProcessMessageReceived(
+      CefRefPtr<CefBrowser> browser,
+      CefRefPtr<CefFrame> frame,
+      CefProcessId source_process,
+                                CefRefPtr<CefProcessMessage> message) override;
+
   // Determine the process type based on command-line arguments.
   static ProcessType GetProcessType(CefRefPtr<CefCommandLine> command_line);
+  static std::string ProcessTypeToString(ProcessType type);
 
  private:
   // Registers custom schemes. Implemented by cefclient in
   // client_app_delegates_common.cc
   static void RegisterCustomSchemes(CefRawPtr<CefSchemeRegistrar> registrar);
-
-  // CefApp methods.
+   
   void OnRegisterCustomSchemes(
       CefRawPtr<CefSchemeRegistrar> registrar) override;
 
-  DISALLOW_COPY_AND_ASSIGN(ClientApp);
+  DISALLOW_COPY_AND_ASSIGN(ProcessHandler);
 };
-
-#endif  // CEF_TESTS_SHARED_COMMON_CLIENT_APP_H_

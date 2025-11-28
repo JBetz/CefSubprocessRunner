@@ -2,7 +2,7 @@
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 
-#include "client_app.h"
+#include "process_handler.h"
 
 #include "include/cef_command_line.h"
 
@@ -17,10 +17,18 @@ const char kZygoteProcess[] = "zygote";
 
 }  // namespace
 
-ClientApp::ClientApp() {}
+ProcessHandler::ProcessHandler() {}
+
+bool ProcessHandler::OnProcessMessageReceived(
+    CefRefPtr<CefBrowser> browser,
+    CefRefPtr<CefFrame> frame,
+    CefProcessId source_process,
+    CefRefPtr<CefProcessMessage> message) {
+  return false;
+}
 
 // static
-ClientApp::ProcessType ClientApp::GetProcessType(
+ProcessHandler::ProcessType ProcessHandler::GetProcessType(
     CefRefPtr<CefCommandLine> command_line) {
   // The command-line flag won't be specified for the browser process.
   if (!command_line->HasSwitch(kProcessType)) {
@@ -40,7 +48,21 @@ ClientApp::ProcessType ClientApp::GetProcessType(
   return OtherProcess;
 }
 
-void ClientApp::OnRegisterCustomSchemes(
+std::string ProcessHandler::ProcessTypeToString(ProcessHandler::ProcessType type) {
+    switch (type) {
+        case BrowserProcess:
+            return "Browser";
+        case RendererProcess:
+            return "Renderer";
+        case ZygoteProcess:
+            return "Zygote";
+        case OtherProcess:
+            return "Other";
+        default:
+          return "Unknown";
+    }
+}
+
+void ProcessHandler::OnRegisterCustomSchemes(
     CefRawPtr<CefSchemeRegistrar> registrar) {
-  RegisterCustomSchemes(registrar);
 }

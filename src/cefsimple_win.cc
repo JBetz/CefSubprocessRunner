@@ -2,16 +2,20 @@
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 
+#include <filesystem>
+#include <iostream>
+#include <optional>
+#include <string>
 #include <windows.h>
 
 #include "include/cef_command_line.h"
 #include "include/cef_sandbox_win.h"
 
-#include "client_app.h"
-#include "client_app_browser.h"
-#include "client_app_other.h"
-#include "client_app_renderer.h"
-#include "client_switches.h"
+#include "process_handler.h"
+#include "browser_process_handler.h"
+#include "other_process_handler.h"
+#include "render_process_handler.h"
+#include "command_line_switches.h"
 
 // When generating projects with CMake the CEF_USE_SANDBOX value will be defined
 // automatically if using the required compiler version. Pass -DUSE_SANDBOX=OFF
@@ -67,22 +71,32 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
   // Parse command-line arguments for use in this method.
   CefRefPtr<CefCommandLine> command_line = CefCommandLine::CreateCommandLine();
   command_line->InitFromString(::GetCommandLineW());
-
-  // Create a ClientApp of the correct type.
-  CefRefPtr<CefApp> app;
-  ClientApp::ProcessType process_type = ClientApp::GetProcessType(command_line);
-  if (process_type == ClientApp::BrowserProcess) {
-    app = new ClientAppBrowser();
-  } else if (process_type == ClientApp::RendererProcess) {
-    app = new ClientAppRenderer();
-  } else if (process_type == ClientApp::OtherProcess) {
-    app = new ClientAppOther();
+  std::optional<int> application_process_id;
+  std::string application_process_id_value = command_line->GetSwitchValue(switches::kApplicationProcessId);
+  if (!application_process_id_value.empty()) {
+      application_process_id = std::stoi(application_process_id_value);
   }
 
-  // CEF applications have multiple sub-processes (render, GPU, etc) that share
+  // Create a ProcessHandler of the correct type.
+  CefRefPtr<CefApp> handler;
+  ProcessHandler::ProcessType process_type = ProcessHandler::GetProcessType(command_line);
+
+  OutputDebugStringA((std::string("Running process type: ") +
+                      ProcessHandler::ProcessTypeToString(process_type) + "\n")
+                         .c_str());
+
+  if (process_type == ProcessHandler::BrowserProcess) {
+    handler = new BrowserProcessHandler();
+  } else if (process_type == ProcessHandler::RendererProcess) {
+    handler = new RenderProcessHandler();
+  } else if (process_type == ProcessHandler::OtherProcess) {
+    handler = new OtherProcessHandler();
+  }
+
+  // CEF Handlerlications have multiple sub-processes (render, GPU, etc) that share
   // the same executable. This function checks the command-line and, if this is
-  // a sub-process, executes the appropriate logic.
-  exit_code = CefExecuteProcess(main_args, app, sandbox_info);
+  // a sub-process, executes the Handlerropriate logic.
+  exit_code = CefExecuteProcess(main_args, handler, sandbox_info);
   if (exit_code >= 0) {
     return exit_code;
   }
@@ -92,12 +106,14 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
   settings.no_sandbox = true;
   settings.log_severity = LOGSEVERITY_DEFAULT;
   settings.windowless_rendering_enabled = true;
-
+  std::filesystem::path cache_path = std::filesystem::current_path() / "cache"; 
+  CefString(&settings.cache_path) = cache_path;
+  
   // Initialize the CEF browser process. The first browser instance will be
   // created in CefBrowserProcessHandler::OnContextInitialized() after CEF has
   // been initialized. May return false if initialization fails or if early exit
   // is desired (for example, due to process singleton relaunch behavior).
-  if (!CefInitialize(main_args, settings, app, sandbox_info)) {
+  if (!CefInitialize(main_args, settings, handler, sandbox_info)) {
     return 1;
   }
 

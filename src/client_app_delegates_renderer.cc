@@ -2,8 +2,8 @@
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 
-#include "client_app_renderer.h"
+#include "render_process_handler.h"
 
 // static
-void ClientAppRenderer::CreateDelegates(DelegateSet& delegates) {
+void RenderProcessHandler::CreateDelegates(DelegateSet& delegates) {
 }

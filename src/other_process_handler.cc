@@ -2,8 +2,8 @@
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 
-#include "client_app_other.h"
+#include "other_process_handler.h"
 
 #include "include/cef_command_line.h"
 
-ClientAppOther::ClientAppOther() {}
+OtherProcessHandler::OtherProcessHandler() {}

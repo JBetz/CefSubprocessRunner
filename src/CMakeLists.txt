@@ -8,18 +8,21 @@
 
 # cefsimple sources.
 set(CEFSIMPLE_SRCS
-  client_app.cc
-  client_app.h
-  client_app_browser.cc
-  client_app_browser.h
-  client_app_delegates_common.cc
-  client_app_delegates_renderer.cc
-  client_app_other.cc
-  client_app_other.h
-  client_app_renderer.cc
-  client_app_renderer.h
-  client_switches.cc
-  client_switches.h)
+  browser_handler.cc
+  browser_handler.h
+  browser_process_handler.cc
+  browser_process_handler.h
+  command_line_switches.cc
+  command_line_switches.h
+  guid_ext.hpp
+  other_process_handler.cc
+  other_process_handler.h
+  process_handler.cc
+  process_handler.h
+  render_process_handler.cc
+  render_process_handler.h
+  rpc.hpp
+  thread_safe_queue.hpp)
 set(CEFSIMPLE_SRCS_LINUX
   cefsimple_linux.cc)
 set(CEFSIMPLE_SRCS_MAC
@@ -215,12 +218,31 @@ if(OS_WINDOWS)
   add_executable(${CEF_TARGET} WIN32 ${CEFSIMPLE_SRCS})
   add_dependencies(${CEF_TARGET} libcef_dll_wrapper)
   SET_EXECUTABLE_TARGET_PROPERTIES(${CEF_TARGET})
-  target_link_libraries(${CEF_TARGET} libcef_lib libcef_dll_wrapper ${CEF_STANDARD_LIBS})
+
+  target_include_directories(${CEF_TARGET} PRIVATE
+    ${CMAKE_SOURCE_DIR}/third_party/SDL3/include
+    ${CMAKE_SOURCE_DIR}/third_party/SDL3_net/include
+    ${CMAKE_SOURCE_DIR}/third_party/json/include
+  )
+
+  target_link_libraries(${CEF_TARGET}
+    libcef_lib
+    libcef_dll_wrapper
+    ${CEF_STANDARD_LIBS}
+    ${CMAKE_SOURCE_DIR}/third_party/SDL3/lib/SDL3.lib
+    ${CMAKE_SOURCE_DIR}/third_party/SDL3_net/lib/SDL3_net.lib
+  )
 
   # Add the custom manifest files to the executable.
   ADD_WINDOWS_MANIFEST("${CMAKE_CURRENT_SOURCE_DIR}" "${CEF_TARGET}" "exe")
 
+  set(SDL_DLLS
+    "third_party/SDL3/lib/SDL3.dll"
+    "third_party/SDL3_net/lib/SDL3_net.dll"
+   )
+
   # Copy binary and resource files to the target output directory.
   COPY_FILES("${CEF_TARGET}" "${CEF_BINARY_FILES}" "${CEF_BINARY_DIR}" "${CEF_TARGET_OUT_DIR}")
   COPY_FILES("${CEF_TARGET}" "${CEF_RESOURCE_FILES}" "${CEF_RESOURCE_DIR}" "${CEF_TARGET_OUT_DIR}")
+  COPY_FILES("${CEF_TARGET}" "${SDL_DLLS}" "${CMAKE_SOURCE_DIR}" "${CEF_TARGET_OUT_DIR}")
 endif()

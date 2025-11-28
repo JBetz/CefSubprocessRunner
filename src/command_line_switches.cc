@@ -2,7 +2,7 @@
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 
-#include "client_switches.h"
+#include "command_line_switches.h"
 
 namespace switches {
 
@@ -56,5 +56,6 @@ const char kUseWindowModalDialog[] = "use-window-modal-dialog";
 const char kUseBottomControls[] = "use-bottom-controls";
 const char kHidePipFrame[] = "hide-pip-frame";
 const char kHideChromeBubbles[] = "hide-chrome-bubbles";
+const char kApplicationProcessId[] = "application-process-id";
 
 }  // namespace switches

@@ -1,0 +1,51 @@
+#pragma once
+
+#include <rpc.h>
+#include "SDL3_net/SDL_net.h"
+#include "include/cef_base.h"
+#include "process_handler.h"
+#include "rpc.hpp"
+#include "thread_safe_queue.hpp"
+
+class BrowserProcessHandler : public ProcessHandler, public CefBrowserProcessHandler {
+ public:
+  BrowserProcessHandler();
+  ~BrowserProcessHandler();
+
+  // Accessors.
+  NET_Server* GetSocketServer();
+  CefRefPtr<CefBrowser> GetBrowser(int browserId);
+
+  // CefBrowserProcessHandler methods.
+  CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() override;
+  void OnContextInitialized() override;
+  bool OnProcessMessageReceived(
+	  CefRefPtr<CefBrowser> browser,
+	  CefRefPtr<CefFrame> frame,
+	  CefProcessId source_process,
+                                CefRefPtr<CefProcessMessage> message) override;
+  
+  // Incoming RPC messages.
+  void CreateBrowserRpc(const CefCreateBrowserRequest& request);
+  
+  // Outgoing RPC messages.
+  void SendMessage(std::string payload);
+  template<typename T> T WaitForResponse(UUID id);
+  
+  // RPC threads, need to be static.
+  static int RpcServerThread(void* browserProcessHandlerPtr);
+  static int RpcWorkerThread(void* browserProcessHandlerPtr);
+
+ private:
+  HANDLE applicationProcessHandle;
+  ThreadSafeQueue<std::string> incomingMessageQueue;
+  ThreadSafeQueue<std::string> outgoingMessageQueue;
+  SDL_Mutex* responseMapMutex = nullptr;
+  std::map<UUID, std::unique_ptr<ResponseEntry>> responseEntries;
+  std::map<int, CefRefPtr<CefBrowser>> browsers;
+
+  NET_Server* socketServer;
+
+  IMPLEMENT_REFCOUNTING(BrowserProcessHandler);
+  DISALLOW_COPY_AND_ASSIGN(BrowserProcessHandler);
+};
