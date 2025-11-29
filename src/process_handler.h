@@ -20,12 +20,6 @@ class ProcessHandler : public CefApp, CefClient {
     OtherProcess,
   };
 
-  bool OnProcessMessageReceived(
-      CefRefPtr<CefBrowser> browser,
-      CefRefPtr<CefFrame> frame,
-      CefProcessId source_process,
-                                CefRefPtr<CefProcessMessage> message) override;
-
   // Determine the process type based on command-line arguments.
   static ProcessType GetProcessType(CefRefPtr<CefCommandLine> command_line);
   static std::string ProcessTypeToString(ProcessType type);

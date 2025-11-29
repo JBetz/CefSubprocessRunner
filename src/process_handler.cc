@@ -19,14 +19,6 @@ const char kZygoteProcess[] = "zygote";
 
 ProcessHandler::ProcessHandler() {}
 
-bool ProcessHandler::OnProcessMessageReceived(
-    CefRefPtr<CefBrowser> browser,
-    CefRefPtr<CefFrame> frame,
-    CefProcessId source_process,
-    CefRefPtr<CefProcessMessage> message) {
-  return false;
-}
-
 // static
 ProcessHandler::ProcessType ProcessHandler::GetProcessType(
     CefRefPtr<CefCommandLine> command_line) {
