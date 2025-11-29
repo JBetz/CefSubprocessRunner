@@ -108,7 +108,10 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
   settings.windowless_rendering_enabled = true;
   std::filesystem::path cache_path = std::filesystem::current_path() / "cache"; 
   CefString(&settings.cache_path) = cache_path;
+  std::filesystem::path log_file = std::filesystem::current_path() / "cef.log";
+  CefString(&settings.log_file) = log_file;
   
+
   // Initialize the CEF browser process. The first browser instance will be
   // created in CefBrowserProcessHandler::OnContextInitialized() after CEF has
   // been initialized. May return false if initialization fails or if early exit
