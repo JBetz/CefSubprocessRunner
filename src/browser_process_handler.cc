@@ -271,7 +271,6 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
       std::string preview = msg.substr(0, previewLen);
       SDL_Log("RpcWorkerThread: JSON parse_error: %s at byte=%u payload_preview='%s'",
               e_parse.what(), static_cast<unsigned int>(e_parse.byte), preview.c_str());
-      // skip this malformed message and continue processing others
       continue;
     } catch (const std::exception& e) {
       SDL_Log("RpcWorkerThread: JSON exception: %s", e.what());
@@ -284,6 +283,7 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
     if (type == "CefCreateBrowserRequest") {
       CefCreateBrowserRequest request = j.get<CefCreateBrowserRequest>();
       CefPostTask(TID_UI, base::BindOnce(&BrowserProcessHandler::CreateBrowserRpc, browserProcessHandler, request));
+      continue;
     }
 
     if (type == "CefEvalRequest") {
@@ -291,25 +291,25 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
       CefEvalRequest evalRequest = j.get<CefEvalRequest>();
       CefRefPtr<CefBrowser> browser =
           browserProcessHandler->GetBrowser(evalRequest.browserId);
-      CefRefPtr<CefFrame> frame = browser->GetMainFrame();
+            CefRefPtr<CefFrame> frame = browser->GetMainFrame();
       CefRefPtr<CefProcessMessage> message =
           CefProcessMessage::Create(kEvalMessage);
       message->GetArgumentList()->SetString(0, msg);
-      frame->SendProcessMessage(PID_RENDERER, message);
+            frame->SendProcessMessage(PID_RENDERER, message);
     };
 
     if (type == "CefMouseClickEvent") {
       CefMouseClickEvent request = j.get<CefMouseClickEvent>();
       CefRefPtr<CefBrowser> browser = browserProcessHandler->GetBrowser(request.browserId);
       if (browser) {
-        browser->GetHost()->SendMouseClickEvent(
+            browser->GetHost()->SendMouseClickEvent(
             request.mouseEvent,
             static_cast<CefBrowserHost::MouseButtonType>(request.button),
             request.mouseUp,
             request.clickCount);
       } else {
         SDL_Log("CefMouseClickEvent: Browser with id %d not found", request.browserId);
-      }     
+    }
     }
 
     if (type == "CefMouseMoveEvent") {
@@ -321,7 +321,8 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
             request.mouseLeave);
       } else {
         SDL_Log("CefMouseMoveEvent: Browser with id %d not found", request.browserId);
-      }     
+      }
+      continue;
     }
 
     if (type == "CefMouseWheelEvent") {
@@ -331,7 +332,7 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
         browser->GetHost()->SendMouseWheelEvent(request.mouseEvent, request.deltaX, request.deltaY);
       } else {
         SDL_Log("CefMouseWheelEvent: Browser with id %d not found", request.browserId);
-      }
+            }
     }
 
     if (type == "CefKeyboardEvent") {
@@ -341,7 +342,7 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
         browser->GetHost()->SendKeyEvent(request.keyEvent);
       } else {
         SDL_Log("CefKeyboardEvent: Browser with id %d not found", request.browserId);
-      }
+            }
     }
 
     if (type == "CefAcknowledgement") {
@@ -357,11 +358,14 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
         SDL_UnlockMutex(e->mutex);
       }
       SDL_UnlockMutex(browserProcessHandler->responseMapMutex);
+      continue;
     }
-  }
-}
 
-template CefAcknowledgement BrowserProcessHandler::WaitForResponse<CefAcknowledgement>(UUID);
+    SDL_Log("RpcWorkerThread: unknown message type '%s'", type.c_str());
+  }
+
+  return 0;
+}
 
 bool BrowserProcessHandler::OnProcessMessageReceived(
     CefRefPtr<CefBrowser> browser,
@@ -399,3 +403,6 @@ bool BrowserProcessHandler::OnProcessMessageReceived(
   }
   return false;
 }
+
+template CefAcknowledgement
+    BrowserProcessHandler::WaitForResponse<CefAcknowledgement>(UUID);
