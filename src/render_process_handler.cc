@@ -23,12 +23,8 @@ const char kOnNavigateMessage[] = "RenderProcessHandler.OnNavigate";
 const char kOnMessageMessage[] = "RenderProcessHandler.OnMessage";
 const char kOnEvalMessage[] = "RenderProcessHandler.OnEval";
 
-RenderProcessHandler::RenderProcessHandler()
-    : application_process_id_(std::nullopt) {
-}
+RenderProcessHandler::RenderProcessHandler() {}
 
-RenderProcessHandler::RenderProcessHandler(int application_process_id)
-    : application_process_id_(application_process_id) {}
 
 void RenderProcessHandler::OnWebKitInitialized() {
 }

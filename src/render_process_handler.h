@@ -13,13 +13,18 @@
 class RenderProcessHandler : public ProcessHandler, public CefRenderProcessHandler {
  public:
     RenderProcessHandler();
-    RenderProcessHandler(int application_process_id);
 
  private:
   // CefApp methods.
   CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() override {
     return this;
   }
+
+  // CefClient methods.
+  bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
+                                CefRefPtr<CefFrame> frame,
+                                CefProcessId source_process,
+                                CefRefPtr<CefProcessMessage> message) override;
 
   // CefRenderProcessHandler methods.
   void OnWebKitInitialized() override;
@@ -41,14 +46,9 @@ class RenderProcessHandler : public ProcessHandler, public CefRenderProcessHandl
   void OnFocusedNodeChanged(CefRefPtr<CefBrowser> browser,
                             CefRefPtr<CefFrame> frame,
                             CefRefPtr<CefDOMNode> node) override;
-  bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
-                                CefRefPtr<CefFrame> frame,
-                                CefProcessId source_process,
-                                CefRefPtr<CefProcessMessage> message) override;
 
  private:
   bool last_node_is_editable_ = false;
-  std::optional<int> application_process_id_;
 
   IMPLEMENT_REFCOUNTING(RenderProcessHandler);
   DISALLOW_COPY_AND_ASSIGN(RenderProcessHandler);
