@@ -35,19 +35,27 @@ bool BrowserHandler::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser_,
                                  CefRefPtr<CefFrame> frame,
                                  CefProcessId source_process,
                                  CefRefPtr<CefProcessMessage> message) {
-    const CefString& name = message->GetName();
-  if (name == "RenderProcessHandler.OnNavigate" ||
-        name == "RenderProcessHandler.OnMouseOver" || name == "RenderProcessHandler.Eval") {
-      CefRefPtr<CefListValue> args = message->GetArgumentList();
-      if (!args || args->GetSize() == 0 || args->GetType(0) != VTYPE_STRING) {
-        SDL_Log("OnProcessMessageReceived without a string argument");
-        return false;
-      }
-      std::string payload = args->GetString(0).ToString();
-      browserProcessHandler->BrowserProcessHandler::SendMessage(payload);
-      return true;
-    }
+  const CefString& name = message->GetName();
+  CefRefPtr<CefListValue> args = message->GetArgumentList();
+  if (!args || args->GetSize() == 0) {
     return false;
+  }
+  const bool is_known_message = (name == "RenderProcessHandler.OnNavigate") ||
+                                (name == "RenderProcessHandler.OnMouseOver") ||
+                                (name == "RenderProcessHandler.OnMessage") ||
+                                (name == "RenderProcessHandler.OnFocus") ||
+                                (name == "RenderProcessHandler.OnFocusOut") ||
+                                (name == "RenderProcessHandler.OnEval");
+
+  if (!is_known_message) {
+    return false;
+  }
+  if (args->GetType(0) == VTYPE_STRING) {
+    std::string payload = args->GetString(0).ToString();
+    browserProcessHandler->BrowserProcessHandler::SendMessage(payload);
+    return true;
+  }
+  return false;
 }
 
 void BrowserHandler::GetViewRect(CefRefPtr<CefBrowser> browser_,

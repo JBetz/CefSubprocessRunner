@@ -373,42 +373,5 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
   return 0;
 }
 
-bool BrowserProcessHandler::OnProcessMessageReceived(
-    CefRefPtr<CefBrowser> browser,
-    CefRefPtr<CefFrame> frame,
-    CefProcessId source_process,
-    CefRefPtr<CefProcessMessage> message) {
-  const CefString& name = message->GetName();
-  SDL_Log("BrowserProcessHandler::OnProcessMessageReceived: name=%s",
-          name.ToString().c_str());
-  CefRefPtr<CefListValue> args = message->GetArgumentList();
-  if (!args || args->GetSize() == 0) {
-    return false;
-  }
-
-  // Forward known renderer->browser messages to the application via the
-  // outgoingMessageQueue. Most messages use a single string argument that
-  // contains a JSON payload.
-  const bool is_known_message =
-      (name == "RenderProcessHandler.OnNavigate") ||
-      (name == "RenderProcessHandler.OnMouseOver") ||
-      (name == "RenderProcessHandler.OnMessage") ||
-      (name == "RenderProcessHandler.OnFocus") ||
-      (name == "RenderProcessHandler.OnFocusOut") ||
-      (name == "RenderProcessHandler.OnEval");
-
-  if (!is_known_message) {
-    return false;
-  }
-
-  // If the first argument is a string we can forward it directly.
-  if (args->GetType(0) == VTYPE_STRING) {
-    std::string payload = args->GetString(0).ToString();
-    outgoingMessageQueue.push(payload);
-    return true;
-  }
-  return false;
-}
-
 template CefAcknowledgement
     BrowserProcessHandler::WaitForResponse<CefAcknowledgement>(UUID);

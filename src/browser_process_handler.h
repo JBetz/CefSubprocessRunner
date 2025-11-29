@@ -16,12 +16,6 @@ class BrowserProcessHandler : public ProcessHandler, public CefBrowserProcessHan
   NET_Server* GetSocketServer();
   CefRefPtr<CefBrowser> GetBrowser(int browserId);
 
-  // CefClient methods.
-  bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
-                                CefRefPtr<CefFrame> frame,
-                                CefProcessId source_process,
-                                CefRefPtr<CefProcessMessage> message) override;
-
   // CefBrowserProcessHandler methods.
   CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() override;
   void OnContextInitialized() override;
