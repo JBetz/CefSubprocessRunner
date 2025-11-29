@@ -296,6 +296,7 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
           CefProcessMessage::Create(kEvalMessage);
       message->GetArgumentList()->SetString(0, msg);
             frame->SendProcessMessage(PID_RENDERER, message);
+      continue;
     };
 
     if (type == "CefMouseClickEvent") {
@@ -309,7 +310,8 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
             request.clickCount);
       } else {
         SDL_Log("CefMouseClickEvent: Browser with id %d not found", request.browserId);
-    }
+      }
+      continue;
     }
 
     if (type == "CefMouseMoveEvent") {
@@ -331,8 +333,10 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
       if (browser) {
         browser->GetHost()->SendMouseWheelEvent(request.mouseEvent, request.deltaX, request.deltaY);
       } else {
-        SDL_Log("CefMouseWheelEvent: Browser with id %d not found", request.browserId);
-            }
+        SDL_Log("CefMouseWheelEvent: Browser with id %d not found",
+                request.browserId);
+      };
+      continue;
     }
 
     if (type == "CefKeyboardEvent") {
@@ -341,8 +345,10 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
       if (browser) {
         browser->GetHost()->SendKeyEvent(request.keyEvent);
       } else {
-        SDL_Log("CefKeyboardEvent: Browser with id %d not found", request.browserId);
-            }
+        SDL_Log("CefKeyboardEvent: Browser with id %d not found",
+                request.browserId);
+      }
+      continue;
     }
 
     if (type == "CefAcknowledgement") {
