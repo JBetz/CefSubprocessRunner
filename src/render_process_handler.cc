@@ -25,6 +25,9 @@ const char kOnEvalMessage[] = "RenderProcessHandler.OnEval";
 
 RenderProcessHandler::RenderProcessHandler() {}
 
+CefRefPtr<CefRenderProcessHandler> RenderProcessHandler::GetRenderProcessHandler() {
+  return this;
+}
 
 void RenderProcessHandler::OnWebKitInitialized() {
 }
@@ -38,8 +41,7 @@ void RenderProcessHandler::OnBrowserDestroyed(CefRefPtr<CefBrowser> browser) {
 }
 
 CefRefPtr<CefLoadHandler> RenderProcessHandler::GetLoadHandler() {
-  CefRefPtr<CefLoadHandler> load_handler;
-  return load_handler;
+  return nullptr;
 }
 
 class MouseOverHandler : public CefV8Handler {
