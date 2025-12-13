@@ -324,6 +324,7 @@ inline void to_json(json& j, const EvalJavaScriptResponse& m) {
 struct AcceleratedPaintEvent {
   UUID id;
   int browserId;
+  int elementType;
   uintptr_t sharedTextureHandle;
   int format;
 };
@@ -333,6 +334,7 @@ inline void to_json(json& j, const AcceleratedPaintEvent& m) {
   j["type"] = "AcceleratedPaintEvent";
   j["id"] = m.id;
   j["browserId"] = m.browserId;
+  j["elementType"] = m.elementType;
   j["sharedTextureHandle"] = m.sharedTextureHandle;
   j["format"] = m.format;
 }

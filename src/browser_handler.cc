@@ -86,6 +86,7 @@ void BrowserHandler::OnAcceleratedPaint(
   AcceleratedPaintEvent message;
   message.id = id;
   message.browserId = browser_->GetIdentifier();
+  message.elementType = type;
   message.format = info.format;
 
   // Duplicate the shared texture handle into the application process
