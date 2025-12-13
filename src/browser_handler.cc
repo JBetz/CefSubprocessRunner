@@ -69,12 +69,11 @@ void BrowserHandler::OnPaint(CefRefPtr<CefBrowser> browser_,
                              const void* buffer,
                              int width,
                              int height) {
-  PaintEvent message;
-  message.width = width;
-  message.width = width;
-  message.height = height;
-  json j = message;
-  browserProcessHandler->SendMessage(j.dump());
+  SDL_Log(
+      "WARNING: BrowserHandler::OnPaint() was called, which means that this "
+      "browser (id: %d) was set up incorrectly, or your machine does not have a "
+      "GPU compatible with Chromium's hardware-accelerated rendering.",
+      browser_->GetIdentifier());
 }
 
 void BrowserHandler::OnAcceleratedPaint(

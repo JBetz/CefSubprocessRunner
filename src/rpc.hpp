@@ -321,22 +321,6 @@ inline void to_json(json& j, const EvalJavaScriptResponse& m) {
   }
 }
 
-struct PaintEvent {
-  UUID id;
-  int browserId;
-  int width;
-  int height;
-};
-
-inline void to_json(json& j, const PaintEvent& m) {
-  j = json::object();
-  j["type"] = "PaintEvent";
-  j["id"] = m.id;
-  j["browserId"] = m.browserId;
-  j["width"] = m.width;
-  j["height"] = m.height;
-}
-
 struct AcceleratedPaintEvent {
   UUID id;
   int browserId;
