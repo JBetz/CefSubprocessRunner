@@ -64,7 +64,7 @@ class MouseOverHandler : public CefV8Handler {
     UUID id;
     UuidCreate(&id);
 
-    CefMouseOverEvent mouseOverEvent;
+    MouseOverEvent mouseOverEvent;
     mouseOverEvent.id = id;
     mouseOverEvent.browserId = frame->GetBrowser()->GetIdentifier();
     mouseOverEvent.tagName = target->GetValue("tagName")->GetStringValue().ToString();
@@ -161,7 +161,7 @@ class NavigateHandler : public CefV8Handler {
     UUID id;
     UuidCreate(&id);
 
-    CefNavigateEvent navigateEvent;
+    NavigateEvent navigateEvent;
     navigateEvent.id = id;
     navigateEvent.browserId = frame->GetBrowser()->GetIdentifier();
     navigateEvent.destination.id =
@@ -326,7 +326,7 @@ class PromiseThenHandler : public CefV8Handler {
         CefProcessMessage::Create(kOnEvalMessage);
     CefRefPtr<CefDictionaryValue> messageArguments =
         CefDictionaryValue::Create();
-    CefEvalResponse evalResponse;
+    EvalJavaScriptResponse evalResponse;
     evalResponse.id = messageId;
     evalResponse.result = result.ToString();
     responseMessage->GetArgumentList()->SetDictionary(0, messageArguments);
@@ -356,7 +356,7 @@ bool RenderProcessHandler::OnProcessMessageReceived(
   if (name == "Eval") {
     SDL_Log("RenderProcessHandler received CefEvalRequest");
     const CefString& payload = message->GetArgumentList()->GetString(0);
-    CefEvalRequest evalRequest = json::parse(payload.ToString()).get<CefEvalRequest>();
+    EvalJavaScriptRequest evalRequest = json::parse(payload.ToString()).get<EvalJavaScriptRequest>();
     CefRefPtr<CefV8Value> retval;
     CefRefPtr<CefV8Exception> exception;
     bool success =
@@ -369,7 +369,7 @@ bool RenderProcessHandler::OnProcessMessageReceived(
           CefV8Value::CreateFunction("onPromiseResolved", handler);
       thenFunction->ExecuteFunction(retval, {onResolvedFunc});
      } else {
-      CefEvalResponse evalResponse;
+      EvalJavaScriptResponse evalResponse;
       evalResponse.id = evalRequest.id;
       evalResponse.browserId = frame->GetBrowser()->GetIdentifier();
       evalResponse.success = success;
@@ -384,7 +384,7 @@ bool RenderProcessHandler::OnProcessMessageReceived(
                 ->GetStringValue();
         evalResponse.result = result.ToString();
       } else {
-        CefEvalError error;
+        EvalJavaScriptError error;
         error.endColumn = exception->GetEndColumn();
         error.endPosition = exception->GetEndPosition();
         error.lineNumber = exception->GetLineNumber();

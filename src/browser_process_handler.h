@@ -23,7 +23,7 @@ class BrowserProcessHandler : public ProcessHandler, public CefBrowserProcessHan
   void OnContextInitialized() override;
   
   // Incoming RPC messages.
-  void CreateBrowserRpc(const CefCreateBrowserRequest& request);
+  void CreateBrowserRpc(const CreateBrowserRequest& request);
   
   // Outgoing RPC messages.
   void SendMessage(std::string payload);

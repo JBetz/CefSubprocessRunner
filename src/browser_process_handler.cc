@@ -102,7 +102,7 @@ void BrowserProcessHandler::OnContextInitialized() {
   }
 }
 
-void BrowserProcessHandler::CreateBrowserRpc(const CefCreateBrowserRequest& request) {
+void BrowserProcessHandler::CreateBrowserRpc(const CreateBrowserRequest& request) {
   CefWindowInfo windowInfo;
   windowInfo.SetAsWindowless(nullptr);  // no OS parent
   windowInfo.windowless_rendering_enabled = true;
@@ -134,7 +134,7 @@ void BrowserProcessHandler::CreateBrowserRpc(const CefCreateBrowserRequest& requ
     browsers[browserId] = browser;
     SDL_Log("Created browser on UI thread; id=%d url=%s", browserId,
             request.url.c_str());
-    CefCreateBrowserResponse response;
+    CreateBrowserResponse response;
     response.id = request.id;
     response.browserId = browserId;
     json j = response;
@@ -293,24 +293,24 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
     std::string type = jsonRequest["type"].get<std::string>();
     UUID id = jsonRequest["id"].get<UUID>();
 
-    if (type == "CefInitializeRequest") {
-      CefInitializeRequest request = jsonRequest.get<CefInitializeRequest>();
-      browserProcessHandler->SetupApplicationProcessHandle(request.processId);
-      CefInitializeResponse response;
+    if (type == "InitializeRequest") {
+      InitializeRequest request = jsonRequest.get<InitializeRequest>();
+      browserProcessHandler->SetupApplicationProcessHandle(request.clientProcessId);
+      InitializeResponse response;
       response.id = request.id;
       json jsonResponse = response;
       browserProcessHandler->SendMessage(jsonResponse.dump());
       continue;
     }
 
-    if (type == "CefCreateBrowserRequest") {
-      CefCreateBrowserRequest request = jsonRequest.get<CefCreateBrowserRequest>();
+    if (type == "CreateBrowserRequest") {
+      CreateBrowserRequest request = jsonRequest.get<CreateBrowserRequest>();
       CefPostTask(TID_UI, base::BindOnce(&BrowserProcessHandler::CreateBrowserRpc, browserProcessHandler, request));
       continue;
     }
 
-    if (type == "CefEvalRequest") {
-      CefEvalRequest evalRequest = jsonRequest.get<CefEvalRequest>();
+    if (type == "EvalJavaScriptRequest") {
+      EvalJavaScriptRequest evalRequest = jsonRequest.get<EvalJavaScriptRequest>();
       CefRefPtr<CefBrowser> browser =
           browserProcessHandler->GetBrowser(evalRequest.browserId);
             CefRefPtr<CefFrame> frame = browser->GetMainFrame();
@@ -321,8 +321,8 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
       continue;
     };
 
-    if (type == "CefMouseClickEvent") {
-      CefMouseClickEvent request = jsonRequest.get<CefMouseClickEvent>();
+    if (type == "MouseClickEvent") {
+      MouseClickEvent request = jsonRequest.get<MouseClickEvent>();
       CefRefPtr<CefBrowser> browser = browserProcessHandler->GetBrowser(request.browserId);
       if (browser) {
             browser->GetHost()->SendMouseClickEvent(
@@ -331,49 +331,49 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
             request.mouseUp,
             request.clickCount);
       } else {
-        SDL_Log("CefMouseClickEvent: Browser with id %d not found", request.browserId);
+        SDL_Log("MouseClickEvent: Browser with id %d not found", request.browserId);
       }
       continue;
     }
 
-    if (type == "CefMouseMoveEvent") {
-      CefMouseMoveEvent request = jsonRequest.get<CefMouseMoveEvent>();
+    if (type == "MouseMoveEvent") {
+      MouseMoveEvent request = jsonRequest.get<MouseMoveEvent>();
       CefRefPtr<CefBrowser> browser = browserProcessHandler->GetBrowser(request.browserId);
       if (browser) {
         browser->GetHost()->SendMouseMoveEvent(
             request.mouseEvent,
             request.mouseLeave);
       } else {
-        SDL_Log("CefMouseMoveEvent: Browser with id %d not found", request.browserId);
+        SDL_Log("MouseMoveEvent: Browser with id %d not found", request.browserId);
       }
       continue;
     }
 
-    if (type == "CefMouseWheelEvent") {
-      CefMouseWheelEvent request = jsonRequest.get<CefMouseWheelEvent>();
+    if (type == "MouseWheelEvent") {
+      MouseWheelEvent request = jsonRequest.get<MouseWheelEvent>();
       CefRefPtr<CefBrowser> browser = browserProcessHandler->GetBrowser(request.browserId);
       if (browser) {
         browser->GetHost()->SendMouseWheelEvent(request.mouseEvent, request.deltaX, request.deltaY);
       } else {
-        SDL_Log("CefMouseWheelEvent: Browser with id %d not found",
+        SDL_Log("MouseWheelEvent: Browser with id %d not found",
                 request.browserId);
       };
       continue;
     }
 
-    if (type == "CefKeyboardEvent") {
-      CefKeyboardEvent request = jsonRequest.get<CefKeyboardEvent>();
+    if (type == "KeyboardEvent") {
+      KeyboardEvent request = jsonRequest.get<KeyboardEvent>();
       CefRefPtr<CefBrowser> browser = browserProcessHandler->GetBrowser(request.browserId);
       if (browser) {
         browser->GetHost()->SendKeyEvent(request.keyEvent);
       } else {
-        SDL_Log("CefKeyboardEvent: Browser with id %d not found",
+        SDL_Log("KeyboardEvent: Browser with id %d not found",
                 request.browserId);
       }
       continue;
     }
 
-    if (type == "CefAcknowledgement") {
+    if (type == "Acknowledgement") {
       // Try to find a waiting entry
       SDL_LockMutex(browserProcessHandler->responseMapMutex);
       auto it = browserProcessHandler->responseEntries.find(id);
@@ -395,5 +395,5 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
   return 0;
 }
 
-template CefAcknowledgement
-    BrowserProcessHandler::WaitForResponse<CefAcknowledgement>(UUID);
+template Acknowledgement
+    BrowserProcessHandler::WaitForResponse<Acknowledgement>(UUID);

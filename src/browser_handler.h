@@ -17,7 +17,7 @@ class BrowserHandler : public CefClient, CefRenderHandler, CefDisplayHandler  {
 
   CefRefPtr<CefBrowser> GetBrowser();
   void SetBrowser(CefRefPtr<CefBrowser> browser);
-  void Eval(CefEvalRequest evalRequest);
+  void Eval(EvalJavaScriptRequest evalRequest);
 
   // CefClient:
   CefRefPtr<CefRenderHandler> GetRenderHandler() override;

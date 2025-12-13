@@ -69,41 +69,41 @@ inline void to_json(json& j, const CefCursorInfo& m) {
 }
 
 // Request messages
-struct CefInitializeRequest {
+struct InitializeRequest {
   UUID id;
-  int processId;
+  int clientProcessId;
 };
 
-inline void from_json(const json& j, CefInitializeRequest& m) {
+inline void from_json(const json& j, InitializeRequest& m) {
   j.at("id").get_to(m.id);
-  j.at("processId").get_to(m.processId);
+  j.at("clientProcessId").get_to(m.clientProcessId);
 }
 
-struct CefInitializeResponse {
+struct InitializeResponse {
   UUID id;
 };
 
-inline void to_json(json& j, const CefInitializeResponse& m) {
+inline void to_json(json& j, const InitializeResponse& m) {
   j = json::object();
-  j["type"] = "CefInitializeResponse";
+  j["type"] = "InitializeResponse";
   j["id"] = m.id;
 }
 
-struct CefCreateBrowserRequest {
+struct CreateBrowserRequest {
   UUID id;
   std::string url;
   CefRect rectangle;
   std::optional<std::string> html;
 };
 
-inline void from_json(const json& j, CefCreateBrowserRequest& m) {
+inline void from_json(const json& j, CreateBrowserRequest& m) {
   j.at("id").get_to(m.id);
   j.at("url").get_to(m.url);
   j.at("rectangle").get_to(m.rectangle);
   j.at("html").get_to(m.html);
 }
 
-struct CefEvalRequest {
+struct EvalJavaScriptRequest {
   UUID id;
   int browserId;
   std::string code;
@@ -111,7 +111,7 @@ struct CefEvalRequest {
   int startLine;
 };
 
-inline void from_json(const json& j, CefEvalRequest& m) {
+inline void from_json(const json& j, EvalJavaScriptRequest& m) {
   j.at("id").get_to(m.id);
   j.at("browserId").get_to(m.browserId);
   j.at("code").get_to(m.code);
@@ -119,22 +119,22 @@ inline void from_json(const json& j, CefEvalRequest& m) {
   j.at("startLine").get_to(m.startLine);
 }
 
-inline void from_json(const json& j, CefMouseEvent& m) {
+inline void from_json(const json& j, MouseEvent& m) {
   j.at("x").get_to(m.x);
   j.at("y").get_to(m.y);
   j.at("modifiers").get_to(m.modifiers);
 }
 
-struct CefMouseClickEvent {
+struct MouseClickEvent {
   UUID id;
   int browserId;
-  CefMouseEvent mouseEvent;
+  MouseEvent mouseEvent;
   int button;
   bool mouseUp;
   int clickCount;
 };
 
-inline void from_json(const json& j, CefMouseClickEvent& m) {
+inline void from_json(const json& j, MouseClickEvent& m) {
   j.at("id").get_to(m.id);
   j.at("browserId").get_to(m.browserId);
   j.at("mouseEvent").get_to(m.mouseEvent);
@@ -143,29 +143,29 @@ inline void from_json(const json& j, CefMouseClickEvent& m) {
   j.at("clickCount").get_to(m.clickCount);
 }
 
-struct CefMouseMoveEvent {
+struct MouseMoveEvent {
   UUID id;
   int browserId;
-  CefMouseEvent mouseEvent;
+  MouseEvent mouseEvent;
   bool mouseLeave;
 };
 
-inline void from_json(const json& j, CefMouseMoveEvent& m) {
+inline void from_json(const json& j, MouseMoveEvent& m) {
   j.at("id").get_to(m.id);
   j.at("browserId").get_to(m.browserId);
   j.at("mouseEvent").get_to(m.mouseEvent);
   j.at("mouseLeave").get_to(m.mouseLeave);
 }
 
-struct CefMouseWheelEvent {
+struct MouseWheelEvent {
   UUID id;
   int browserId;
-  CefMouseEvent mouseEvent;
+  MouseEvent mouseEvent;
   int deltaX;
   int deltaY;
 };
 
-inline void from_json(const json& j, CefMouseWheelEvent& m) {
+inline void from_json(const json& j, MouseWheelEvent& m) {
   j.at("id").get_to(m.id);
   j.at("browserId").get_to(m.browserId);
   j.at("mouseEvent").get_to(m.mouseEvent);
@@ -173,7 +173,7 @@ inline void from_json(const json& j, CefMouseWheelEvent& m) {
   j.at("deltaY").get_to(m.deltaY);
 }
 
-struct CefKeyboardEvent {
+struct KeyboardEvent {
   UUID id;
   int browserId;
   CefKeyEvent keyEvent;
@@ -192,13 +192,13 @@ inline void from_json(const json& j, CefKeyEvent& m) {
   j.at("focus_on_editable_field").get_to(m.focus_on_editable_field);
 }
 
-inline void from_json(const json& j, CefKeyboardEvent& m) {
+inline void from_json(const json& j, KeyboardEvent& m) {
   j.at("id").get_to(m.id);
   j.at("browserId").get_to(m.browserId);
   j.at("keyEvent").get_to(m.keyEvent);
 }
 
-struct CefNavigateDestination {
+struct NavigateDestination {
   std::string id;
   int index;
   std::string key;
@@ -206,7 +206,7 @@ struct CefNavigateDestination {
   std::string url;
 };
 
-inline void to_json(json& j, const CefNavigateDestination& m) {
+inline void to_json(json& j, const NavigateDestination& m) {
   j = json::object();
   j["id"] = m.id;
   j["index"] = m.index;
@@ -215,19 +215,19 @@ inline void to_json(json& j, const CefNavigateDestination& m) {
   j["url"] = m.url;
 }
 
-struct CefNavigateEvent {
+struct NavigateEvent {
   UUID id;
   int browserId;
-  CefNavigateDestination destination;
+  NavigateDestination destination;
   std::optional<std::map<std::string, std::string>> formData;
   bool hashChange;
   std::string navigationType;
   bool userInitiated;
 };
 
-inline void to_json(json& j, const CefNavigateEvent& m) {
+inline void to_json(json& j, const NavigateEvent& m) {
   j = json::object();
-  j["type"] = "CefNavigateEvent";
+  j["type"] = "NavigateEvent";
   j["id"] = m.id;
   j["browserId"] = m.browserId;
   j["destination"] = m.destination;
@@ -241,7 +241,7 @@ inline void to_json(json& j, const CefNavigateEvent& m) {
   j["userInitiated"] = m.userInitiated;
 }
 
-struct CefMouseOverEvent {
+struct MouseOverEvent {
   UUID id;
   int browserId;
   std::string tagName;
@@ -250,9 +250,9 @@ struct CefMouseOverEvent {
   CefRect rectangle;
 };
 
-inline void to_json(json& j, const CefMouseOverEvent& m) {
+inline void to_json(json& j, const MouseOverEvent& m) {
   j = json::object();
-  j["type"] = "CefMouseOverEvent";
+  j["type"] = "MouseOverEvent";
   j["id"] = m.id;
   j["browserId"] = m.browserId;
   j["tagName"] = m.tagName;
@@ -264,19 +264,19 @@ inline void to_json(json& j, const CefMouseOverEvent& m) {
 }
 
 // Response messages
-struct CefCreateBrowserResponse {
+struct CreateBrowserResponse {
   UUID id;
   int browserId;
 };
 
-inline void to_json(json& j, const CefCreateBrowserResponse& m) {
+inline void to_json(json& j, const CreateBrowserResponse& m) {
   j = json::object();
-  j["type"] = "CefCreateBrowserResponse";
+  j["type"] = "CreateBrowserResponse";
   j["id"] = m.id;
   j["browserId"] = m.browserId;
 }
 
-struct CefEvalError {
+struct EvalJavaScriptError {
   int endColumn;
   int endPosition;
   int lineNumber;
@@ -287,7 +287,7 @@ struct CefEvalError {
   int startPosition;
 };
 
-inline void to_json(json& j, const CefEvalError& m) {
+inline void to_json(json& j, const EvalJavaScriptError& m) {
   j = json::object();
   j["endColumn"] = m.endColumn;
   j["endPosition"] = m.endPosition;
@@ -299,17 +299,17 @@ inline void to_json(json& j, const CefEvalError& m) {
   j["startPosition"] = m.startPosition;
 }
 
-struct CefEvalResponse {
+struct EvalJavaScriptResponse {
   UUID id;
   int browserId;
   bool success;
-  std::optional<CefEvalError> error;
+  std::optional<EvalJavaScriptError> error;
   std::optional<std::string> result;
 };
 
-inline void to_json(json& j, const CefEvalResponse& m) {
+inline void to_json(json& j, const EvalJavaScriptResponse& m) {
   j = json::object();
-  j["type"] = "CefEvalResponse";
+  j["type"] = "EvalJavaScriptResponse";
   j["id"] = m.id;
   j["browserId"] = m.browserId;
   j["success"] = m.success;
@@ -321,39 +321,39 @@ inline void to_json(json& j, const CefEvalResponse& m) {
   }
 }
 
-struct CefPaintEvent {
+struct PaintEvent {
   UUID id;
   int browserId;
   int width;
   int height;
 };
 
-inline void to_json(json& j, const CefPaintEvent& m) {
+inline void to_json(json& j, const PaintEvent& m) {
   j = json::object();
-  j["type"] = "CefPaintEvent";
+  j["type"] = "PaintEvent";
   j["id"] = m.id;
   j["browserId"] = m.browserId;
   j["width"] = m.width;
   j["height"] = m.height;
 }
 
-struct CefAcceleratedPaintEvent {
+struct AcceleratedPaintEvent {
   UUID id;
   int browserId;
   uintptr_t sharedTextureHandle;
   int format;
 };
 
-inline void to_json(json& j, const CefAcceleratedPaintEvent& m) {
+inline void to_json(json& j, const AcceleratedPaintEvent& m) {
   j = json::object();
-  j["type"] = "CefAcceleratedPaintEvent";
+  j["type"] = "AcceleratedPaintEvent";
   j["id"] = m.id;
   j["browserId"] = m.browserId;
   j["sharedTextureHandle"] = m.sharedTextureHandle;
   j["format"] = m.format;
 }
 
-struct CefCursorChangeEvent {
+struct CursorChangeEvent {
   UUID id;
   int browserId;
   uintptr_t cursorHandle;
@@ -361,44 +361,44 @@ struct CefCursorChangeEvent {
   std::optional<CefCursorInfo> customCursorInfo;
 };
 
-inline void to_json(json& j, const CefCursorChangeEvent& m) {
+inline void to_json(json& j, const CursorChangeEvent& m) {
   j = json::object();
-  j["type"] = "CefCursorChangeEvent";
+  j["type"] = "CursorChangeEvent";
   j["id"] = m.id;
   j["browserId"] = m.browserId;
   j["cursorHandle"] = m.cursorHandle;
   j["cursorType"] = m.cursorType;
 }
 
-struct CefAddressChangeEvent {
+struct AddressChangeEvent {
   UUID id;
   int browserId;
   std::string url;
 };
 
-inline void to_json(json& j, const CefAddressChangeEvent& m) {
+inline void to_json(json& j, const AddressChangeEvent& m) {
   j = json::object();
-  j["type"] = "CefAddressChangeEvent";
+  j["type"] = "AddressChangeEvent";
   j["id"] = m.id;
   j["browserId"] = m.browserId;
   j["url"] = m.url;
 }
 
-struct CefTitleChangeEvent {
+struct TitleChangeEvent {
   UUID id;
   int browserId;
   std::string title;
 };
 
-inline void to_json(json& j, const CefTitleChangeEvent& m) {
+inline void to_json(json& j, const TitleChangeEvent& m) {
   j = json::object();
-  j["type"] = "CefTitleChangeEvent";
+  j["type"] = "TitleChangeEvent";
   j["id"] = m.id;
   j["browserId"] = m.browserId;
   j["title"] = m.title;
 }
 
-struct CefConsoleMessageEvent {
+struct ConsoleMessageEvent {
   UUID id;
   int browserId;
   int level;
@@ -407,9 +407,9 @@ struct CefConsoleMessageEvent {
   int line;
 };
 
-inline void to_json(json& j, const CefConsoleMessageEvent& m) {
+inline void to_json(json& j, const ConsoleMessageEvent& m) {
   j = json::object();
-  j["type"] = "CefConsoleMessageEvent";
+  j["type"] = "ConsoleMessageEvent";
   j["id"] = m.id;
   j["browserId"] = m.browserId;
   j["level"] = m.level;
@@ -418,24 +418,24 @@ inline void to_json(json& j, const CefConsoleMessageEvent& m) {
   j["line"] = m.line;
 }
 
-struct CefLoadingProgressChangeEvent {
+struct LoadingProgressChangeEvent {
   UUID id;
   int browserId;
   double progress;
 };
 
-inline void to_json(json& j, const CefLoadingProgressChangeEvent& m) {
+inline void to_json(json& j, const LoadingProgressChangeEvent& m) {
   j = json::object();
-  j["type"] = "CefLoadingProgressChangeEvent";
+  j["type"] = "LoadingProgressChangeEvent";
   j["id"] = m.id;
   j["browserId"] = m.browserId;
   j["progress"] = m.progress;
 }
 
-struct CefAcknowledgement {
+struct Acknowledgement {
   UUID id;
 };
 
-inline void from_json(const json& j, CefAcknowledgement& m) {
+inline void from_json(const json& j, Acknowledgement& m) {
   j.at("id").get_to(m.id);
 }

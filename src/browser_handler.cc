@@ -69,7 +69,7 @@ void BrowserHandler::OnPaint(CefRefPtr<CefBrowser> browser_,
                              const void* buffer,
                              int width,
                              int height) {
-  CefPaintEvent message;
+  PaintEvent message;
   message.width = width;
   message.width = width;
   message.height = height;
@@ -84,7 +84,7 @@ void BrowserHandler::OnAcceleratedPaint(
     const CefAcceleratedPaintInfo& info) {
   UUID id;
   UuidCreate(&id);
-  CefAcceleratedPaintEvent message;
+  AcceleratedPaintEvent message;
   message.id = id;
   message.browserId = browser_->GetIdentifier();
   message.format = info.format;
@@ -113,7 +113,7 @@ void BrowserHandler::OnAcceleratedPaint(
   }
   json j = message;
   browserProcessHandler->SendMessage(j.dump());
-  browserProcessHandler->WaitForResponse<CefAcknowledgement>(id);
+  browserProcessHandler->WaitForResponse<Acknowledgement>(id);
 }
 
 
@@ -145,7 +145,7 @@ void BrowserHandler::OnAddressChange(CefRefPtr<CefBrowser> browser_,
   UUID id;
   UuidCreate(&id);
 
-  CefAddressChangeEvent message;
+  AddressChangeEvent message;
   message.id = id;
   message.browserId = browser_->GetIdentifier();
   message.url = url.ToString();
@@ -157,7 +157,7 @@ void BrowserHandler::OnTitleChange(CefRefPtr<CefBrowser> browser_,
                                    const CefString& title) {
   UUID id;
   UuidCreate(&id);
-  CefTitleChangeEvent message;
+  TitleChangeEvent message;
   message.id = id;
   message.browserId = browser_->GetIdentifier();
   message.title = title.ToString();
@@ -172,7 +172,7 @@ bool BrowserHandler::OnConsoleMessage(CefRefPtr<CefBrowser> browser_,
                                       int line) {
   UUID id;
   UuidCreate(&id);
-  CefConsoleMessageEvent msg;
+  ConsoleMessageEvent msg;
   msg.id = id;
   msg.browserId = browser_->GetIdentifier();
   msg.level = static_cast<int>(level);
@@ -188,7 +188,7 @@ void BrowserHandler::OnLoadingProgressChange(CefRefPtr<CefBrowser> browser_,
                                               double progress) {
   UUID id;
   UuidCreate(&id);
-  CefLoadingProgressChangeEvent message;
+  LoadingProgressChangeEvent message;
   message.id = id;
   message.browserId = browser_->GetIdentifier();
   message.progress = progress;
@@ -202,7 +202,7 @@ bool BrowserHandler::OnCursorChange(CefRefPtr<CefBrowser> browser_,
                                     const CefCursorInfo& custom_cursor_info) {
   UUID id;
   UuidCreate(&id);
-  CefCursorChangeEvent message;
+  CursorChangeEvent message;
   message.id = id;
   message.browserId = browser_->GetIdentifier();
   message.cursorHandle = reinterpret_cast<uintptr_t>(cursor);
