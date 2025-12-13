@@ -69,6 +69,26 @@ inline void to_json(json& j, const CefCursorInfo& m) {
 }
 
 // Request messages
+struct CefInitializeRequest {
+  UUID id;
+  int processId;
+};
+
+inline void from_json(const json& j, CefInitializeRequest& m) {
+  j.at("id").get_to(m.id);
+  j.at("processId").get_to(m.processId);
+}
+
+struct CefInitializeResponse {
+  UUID id;
+};
+
+inline void to_json(json& j, const CefInitializeResponse& m) {
+  j = json::object();
+  j["type"] = "CefInitializeResponse";
+  j["id"] = m.id;
+}
+
 struct CefCreateBrowserRequest {
   UUID id;
   std::string url;

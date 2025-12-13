@@ -92,24 +92,24 @@ void BrowserHandler::OnAcceleratedPaint(
   // Duplicate the shared texture handle into the application process
   // (hardcoded PID = 1 for now) before sending it.
   HANDLE sourceHandle = info.shared_texture_handle;
-  DWORD appPid = 38524;
-  HANDLE appProcess = OpenProcess(PROCESS_DUP_HANDLE, FALSE, appPid);
-  if (appProcess == NULL) {
-    SDL_Log("OpenProcess(%u) failed: %lu", (unsigned)appPid, GetLastError());
+  std::optional<HANDLE> applicationProcessHandle =
+      browserProcessHandler->GetApplicationProcessHandle();
+  if (!applicationProcessHandle.has_value()) {
+    SDL_Log("Error duplicating shared texture: Application process handle not initialized");
   } else {
-    HANDLE dupHandle = NULL;
+    HANDLE applicationHandle = applicationProcessHandle.value();
+    HANDLE duplicateHandle = NULL;
     if (!DuplicateHandle(GetCurrentProcess(),
                          sourceHandle,
-                         appProcess,
-                         &dupHandle,
+                         applicationHandle,
+                         &duplicateHandle,
                          0,
                          FALSE,
                          DUPLICATE_SAME_ACCESS)) {
-      SDL_Log("DuplicateHandle failed: %lu", GetLastError());
+      SDL_Log("Error duplicating shared texture: DuplicateHandle() call failed");
     } else {
-      message.sharedTextureHandle = reinterpret_cast<uintptr_t>(dupHandle);
+      message.sharedTextureHandle = reinterpret_cast<uintptr_t>(duplicateHandle);
     }
-    CloseHandle(appProcess);
   }
   json j = message;
   browserProcessHandler->SendMessage(j.dump());
