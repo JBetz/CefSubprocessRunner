@@ -24,9 +24,7 @@ set(CEFPROCESSRUNNER_SRCS
   rpc.hpp
   thread_safe_queue.hpp)
 set(CEFPROCESSRUNNER_SRCS_WINDOWS
-  cefprocessrunner_win.rc
-  cefprocessrunner_win.cc
-  resource.h)
+  cefprocessrunner_win.cc)
 APPEND_PLATFORM_SOURCES(CEFPROCESSRUNNER_SRCS)
 source_group(cefprocessrunner FILES ${CEFPROCESSRUNNER_SRCS})
 
