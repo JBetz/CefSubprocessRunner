@@ -92,7 +92,7 @@ void BrowserHandler::OnAcceleratedPaint(
   // (hardcoded PID = 1 for now) before sending it.
   HANDLE sourceHandle = info.shared_texture_handle;
   std::optional<HANDLE> applicationProcessHandle =
-      browserProcessHandler->GetApplicationProcessHandle();
+      browserProcessHandler->GetClientProcessHandle();
   if (!applicationProcessHandle.has_value()) {
     SDL_Log("Error duplicating shared texture: Application process handle not initialized");
   } else {
@@ -143,7 +143,6 @@ void BrowserHandler::OnAddressChange(CefRefPtr<CefBrowser> browser_,
                                     const CefString& url) {
   UUID id;
   UuidCreate(&id);
-
   AddressChangeEvent message;
   message.id = id;
   message.browserId = browser_->GetIdentifier();

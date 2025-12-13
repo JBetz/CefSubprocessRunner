@@ -27,7 +27,7 @@ using json = nlohmann::json;
 const char kEvalMessage[] = "Eval";
 
 BrowserProcessHandler::BrowserProcessHandler()
-    : applicationProcessHandle(std::nullopt),
+    : clientProcessHandle(std::nullopt),
       incomingMessageQueue(),
       outgoingMessageQueue(),
       responseMapMutex(SDL_CreateMutex()),
@@ -55,16 +55,16 @@ CefRefPtr<CefBrowserProcessHandler> BrowserProcessHandler::GetBrowserProcessHand
   return this;
 }
 
-std::optional<HANDLE> BrowserProcessHandler::GetApplicationProcessHandle() {
-  return this->applicationProcessHandle;
+std::optional<HANDLE> BrowserProcessHandler::GetClientProcessHandle() {
+  return this->clientProcessHandle;
 }
 
-void BrowserProcessHandler::SetupApplicationProcessHandle(int processId) {
+void BrowserProcessHandler::OpenClientProcessHandle(int processId) {
   HANDLE handle = OpenProcess(PROCESS_DUP_HANDLE, FALSE, processId);
   if (handle == NULL) {
     SDL_Log("OpenProcess(%u) failed: %lu", (unsigned)processId, GetLastError());
   } else {
-    this->applicationProcessHandle = std::make_optional(handle);
+    this->clientProcessHandle = std::make_optional(handle);
   }
 }
 
@@ -295,7 +295,7 @@ int BrowserProcessHandler::RpcWorkerThread(void* browserProcessHandlerPtr) {
 
     if (type == "InitializeRequest") {
       InitializeRequest request = jsonRequest.get<InitializeRequest>();
-      browserProcessHandler->SetupApplicationProcessHandle(request.clientProcessId);
+      browserProcessHandler->OpenClientProcessHandle(request.clientProcessId);
       InitializeResponse response;
       response.id = request.id;
       json jsonResponse = response;
